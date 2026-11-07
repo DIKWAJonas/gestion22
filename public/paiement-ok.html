@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Paiement - Gestion22</title>
+<style>body{font-family:sans-serif;padding:24px}a{display:block;margin-top:20px}</style>
+</head>
+<body>
+<h1>Gestion22</h1>
+<p id="r">Vérification du paiement...</p>
+<a href="/">Retour à la boutique</a>
+<script>
+const sid = new URLSearchParams(location.search).get('session_id');
+fetch('/api/paiement/verifier?session_id=' + encodeURIComponent(sid))
+  .then((r) => r.json())
+  .then((j) => {
+    document.getElementById('r').textContent = j.paye
+      ? 'Paiement reçu. Commande n°' + j.commande + ' payée. Merci !'
+      : (j.erreur || 'Paiement non confirmé');
+  });
+</script>
+</body>
+</html>

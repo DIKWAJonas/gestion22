@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Gestion22</title>
+<style>
+  body { font-family: sans-serif; margin: 0; background: #f4f6f8; color: #222; }
+  header { background: #1f3a5f; color: #fff; padding: 14px 16px; }
+  main { padding: 16px; max-width: 600px; margin: auto; }
+  section { background: #fff; border-radius: 10px; padding: 14px; margin-bottom: 16px; }
+  h2 { margin-top: 0; }
+  input { width: 100%; box-sizing: border-box; padding: 10px; margin: 6px 0; font-size: 16px; }
+  button { padding: 10px 14px; font-size: 16px; background: #1f3a5f; color: #fff; border: 0; border-radius: 6px; }
+  .carte { border-bottom: 1px solid #ddd; padding: 10px 0; }
+  .carte:last-child { border-bottom: 0; }
+  .carte h3 { margin: 0 0 4px; }
+  .carte p { margin: 0 0 4px; color: #555; }
+  #message { color: #b00020; min-height: 1.2em; }
+</style>
+</head>
+<body>
+<header><h1>Gestion22</h1></header>
+<main>
+  <section id="compte" hidden>
+    <h2 id="bonjour"></h2>
+    <button id="btn-deco">Se déconnecter</button>
+  </section>
+
+  <div id="formulaires">
+    <section>
+      <h2>Inscription</h2>
+      <input id="ins-nom" placeholder="Nom">
+      <input id="ins-email" type="email" placeholder="Email">
+      <input id="ins-mdp" type="password" placeholder="Mot de passe (8 caractères min.)">
+      <button id="btn-ins">Créer mon compte</button>
+    </section>
+    <section>
+      <h2>Connexion</h2>
+      <input id="con-email" type="email" placeholder="Email">
+      <input id="con-mdp" type="password" placeholder="Mot de passe">
+      <button id="btn-con">Se connecter</button>
+    </section>
+  </div>
+
+  <p id="message"></p>
+<section><h2>Panier</h2><div id="panier"></div><button id="btn-cmd">Commander</button><p id="info-cmd"></p></section>
+<section><h2>Mes commandes</h2><div id="historique"></div></section>
+
+  <section>
+    <h2>Catalogue</h2>
+    <div id="produits"></div>
+  </section>
+</main>
+
+<script src="panier.js"></script>
+<script src="historique.js"></script>
+<script>
+const DEVISE = '€';
+const $ = (id) => document.getElementById(id);
+
+async function api(url, data) {
+  const opts = data
+    ? { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) }
+    : {};
+  const r = await fetch(url, opts);
+  const j = await r.json().catch(() => ({}));
+  return { ok: r.ok, data: j };
+}
+
+async function majCompte() {
+  chargerHistorique();
+  const r = await api('/api/moi');
+  if (r.ok) {
+    $('formulaires').hidden = true;
+    $('compte').hidden = false;
+    $('bonjour').textContent = 'Bonjour ' + r.data.nom;
+  } else {
+    $('formulaires').hidden = false;
+    $('compte').hidden = true;
+  }
+}
+
+async function chargerProduits() {
+  const r = await api('/api/produits');
+  const liste = $('produits');
+  liste.textContent = '';
+  for (const p of r.data) {
+    const d = document.createElement('div');
+    d.className = 'carte';
+    const h = document.createElement('h3');
+    h.textContent = p.nom;
+    const desc = document.createElement('p');
+    desc.textContent = p.description;
+    const prix = document.createElement('strong');
+    prix.textContent = (p.prix / 100).toFixed(2).replace('.', ',') + ' ' + DEVISE;
+    d.append(h, desc, prix, boutonAjout(p));
+    liste.append(d);
+  }
+}
+
+$('btn-ins').addEventListener('click', async () => {
+  const r = await api('/api/inscription', {
+    nom: $('ins-nom').value,
+    email: $('ins-email').value,
+    mot_de_passe: $('ins-mdp').value
+  });
+  $('message').textContent = r.ok ? '' : r.data.erreur;
+  if (r.ok) majCompte();
+});
+
+$('btn-con').addEventListener('click', async () => {
+  const r = await api('/api/connexion', {
+    email: $('con-email').value,
+    mot_de_passe: $('con-mdp').value
+  });
+  $('message').textContent = r.ok ? '' : r.data.erreur;
+  if (r.ok) majCompte();
+});
+
+$('btn-deco').addEventListener('click', async () => {
+  await api('/api/deconnexion', {});
+  majCompte();
+});
+
+majCompte();
+chargerProduits();
+</script>
+</body>
+</html>

@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Paiement simulé - Gestion22</title>
+<style>
+  body{font-family:sans-serif;padding:24px}
+  button{padding:12px 16px;font-size:16px;margin:6px 6px 0 0;border:0;border-radius:6px;background:#1f3a5f;color:#fff}
+  .att{background:#fff3cd;padding:10px;border-radius:6px}
+</style>
+</head>
+<body>
+<h1>Gestion22</h1>
+<p class="att">PAIEMENT FICTIF : aucun argent réel n'est débité.</p>
+<p id="r">Commande à payer.</p>
+<button id="ok">Simuler le paiement</button>
+<button id="non">Annuler</button>
+<a href="/" style="display:block;margin-top:20px">Retour à la boutique</a>
+<script>
+const id = new URLSearchParams(location.search).get('commande');
+document.getElementById('ok').addEventListener('click', async () => {
+  const r = await fetch('/api/paiement/simuler', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ commande: id })
+  });
+  const j = await r.json().catch(() => ({}));
+  document.getElementById('r').textContent = r.ok
+    ? 'Paiement simulé reçu. Commande n°' + j.commande + ' payée. Merci !'
+    : (j.erreur || 'Erreur');
+});
+document.getElementById('non').addEventListener('click', () => { location.href = '/'; });
+</script>
+</body>
+</html>
